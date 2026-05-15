@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "rc-clique"
+version = "0.1.0"
+description = "An exclusive group. A winning leader."
+authors = ["RC2215 88962047+RC2215@users.noreply.github.com"]
+readme = "README.md"
+packages = [
+    { include = "clique" },
+]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+click = "^8.3.3"
+blinker = "^1.9.0"
+
+[tool.poetry.group.leaders]
+optional = true
+
+[tool.poetry.group.leaders.dependencies]
+openai = "^2.36.0"
+prompt-toolkit = "^3.0.52"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^2.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
