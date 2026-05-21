@@ -2,7 +2,6 @@
 TBD: Docstring
 """
 
-from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from functools import partial
 from string import Template
@@ -11,41 +10,21 @@ from typing import Any
 import click
 from click import progressbar
 
-from clique.progress_notification import ProgressTracker
+from .progress_notification import ProgressTracker
 
 
-class Leader(ABC):
-    def __init__(self):
-        self._messages_templates: dict[str, str] = {}
+class Leader:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._message_templates: dict[str, str] = {}
 
-    @staticmethod
-    def get_group_attrs() -> dict[str, Any]:
+    @property
+    def attrs(self) -> dict[str, Any]:
         return {}
-
-    @abstractmethod
-    def invoke_group(self):
-        pass
-
-    @abstractmethod
-    def _echo(self, *args, **kwargs) -> None:
-        pass
 
     @property
     def ctx(self):
         return click.get_current_context(silent=True)
-
-    def send_message(self, text: str = None, key: str = None, values: dict[str, str] = None, **kwargs: Any) -> None:
-        if key:
-            assert not text, 'Cannot mix raw text and template key'
-            if template := self._messages_templates.get(key):
-                text = Template(template).safe_substitute(**values)
-
-        if not text:
-            return
-        self._echo(text, **kwargs)
-
-    def insert_message_templates(self, templates: dict[str, str]):
-        self._messages_templates.update(templates)
 
     @property
     def ctx_progress_bar(self):
@@ -53,9 +32,30 @@ class Leader(ABC):
             return self.ctx.__progressbar__
 
     @ctx_progress_bar.setter
-    def ctx_progress_bar(self, progressbar):
+    def ctx_progress_bar(self, progress_bar):
         assert self.ctx
-        self.ctx.__progressbar__ = progressbar
+        self.ctx.__progressbar__ = progress_bar
+
+    def invoke(self, *args, **kwargs):
+        pass
+
+    def _echo(self, *args, **kwargs) -> None:  # noqa: PLR6301
+        click.secho(*args, **kwargs)
+
+    def insert_message_templates(self, templates: dict[str, str]):
+        self._message_templates.update(templates)
+
+    def send_message(
+        self, text: str | None = None, key: str | None = None, values: dict[str, str] | None = None, **kwargs: Any
+    ) -> None:
+        if key:
+            assert not text, 'Cannot mix raw text and template key'
+            if template := self._message_templates.get(key):
+                text = Template(template).safe_substitute(**values) if values else template
+
+        if not text:
+            return
+        self._echo(text, **kwargs)
 
     def _start_progress_bar(self, label: str, length: int):
         assert self.ctx_progress_bar is None, 'Cannot raise several progress bars simultaneously'
@@ -87,22 +87,11 @@ class Leader(ABC):
             progress_tracker.untrack()
 
 
-class CliLeader(Leader):
-    def invoke_group(self):
-        pass
-
-    def _echo(self, *args, **kwargs):
-        click.secho(*args, **kwargs)
-
-
 class VoiceLeader(Leader):
-    @staticmethod
-    def get_group_attrs() -> dict[str, Any]:
+    @property
+    def attrs(self) -> dict[str, Any]:
         return {'invoke_without_command': True}
 
-    def invoke_group(self):
-        # invoke - generate help...
+    def invoke(self, *args, **kwargs):
+        # group = self.ctx.command
         pass
-
-    def _echo(self, *args, **kwargs):
-        click.echo(*args, **kwargs)

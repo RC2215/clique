@@ -1,18 +1,16 @@
 import copy
 import logging
-from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, Final
+from collections.abc import Callable
+from functools import partial, update_wrapper
+from typing import Any, Final
 
-from click import Command, Option, get_current_context
+from click import Command, Option, make_pass_decorator
 
 from .core import CliqueGroup
 from .exceptions import CliqueException
 from .leader import Leader
 
 _logger = logging.getLogger(__name__)
-
-_AnyCallable = Callable[..., Any]
-_Group = Callable[[_AnyCallable], CliqueGroup]
 
 
 class Sentinel:
@@ -21,48 +19,18 @@ class Sentinel:
 
 NOTHING: Final[Sentinel] = Sentinel()
 
+pass_leader = make_pass_decorator(Leader)
 
-def _partial(func: Callable, *args, **kwargs):
+
+def _partial(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Callable[..., Any]:
     return update_wrapper(partial(func, *args, **kwargs), func)
 
 
-def find_leader() -> Leader | None:
-    """
-    TBD: Docstring
-    """
-    ctx = get_current_context(silent=True)
-
-    while ctx is not None:
-        cmd = ctx.command
-        if isinstance(cmd, CliqueGroup):
-            return cmd.leader
-
-        ctx = ctx.parent
-
-    return None
-
-
-def pass_leader(func):
-    """
-    TBD: Docstring
-    """
-    @wraps(func)
-    def new_func(*args, **kwargs):
-        leader = find_leader()
-        assert leader, 'No Leader object found'
-        return func(leader, *args, **kwargs)
-
-    return new_func
-
-
-def set_message_templates(templates: dict[str, str]):
-    """
-    TBD: Docstring
-    """
+def set_message_templates(message_templates: dict[str, str]):
     def inner(func):
         if not isinstance(func, CliqueGroup):
             raise CliqueException('Cannot set templates keys on non CliqueGroup object')
-        func.leader.insert_message_templates(templates)
+        func.leader.insert_message_templates(message_templates)
         return func
 
     return inner
@@ -92,6 +60,7 @@ def make_sub_command(name: str, cmd: Command, default_map: dict[str, Any], force
         raise CliqueException(f'Unknown {cmd.name} params: {list(default_map.keys())}')
 
     if overridden_params:
+        assert new_command.callback is not None
         new_command.callback = _partial(new_command.callback, **overridden_params)
 
     return new_command

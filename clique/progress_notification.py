@@ -5,8 +5,8 @@ This module provides lightweight progress signaling using the Blinker library.
 It allows independent observers to track long-running operations without
 entangling the core business logic with reporting components.
 
-Tasks emit signals through :class:`ProgressNotifier`, while observers subscribe
-using :class:`ProgressTracker`.
+Tasks emit signals through :class:`ProgressNotifier`,
+while observers subscribe using :class:`ProgressTracker`.
 This separation keeps execution code isolated from presentation and monitoring layers.
 
 Typical use cases include:
@@ -14,11 +14,9 @@ Typical use cases include:
 - Allowing multiple independent observers to react to a single task lifecycle.
 - Enabling passive progress monitoring with no execution impact when unobserved.
 
-Progress signals are emitted through a signal namespace and include
-``start``, ``step``, and ``stop`` notifications. Each signal is tagged with the current
-thread identifier and a user-defined label to support concurrent execution.
-The label must be unique through the codebase and be consistently used by both
-the emitter and all registered listeners.
+Progress signals are emitted through a signal namespace and include ``start``, ``step``, and ``stop`` notifications.
+Each signal is tagged with the current thread identifier and a user-defined label to support concurrent execution.
+The label must be unique through the codebase and be consistently used by both the emitter and all registered listeners.
 
 Classes:
     ProgressNotifier: Provides methods to notify the progress in a labeled task.
@@ -38,6 +36,7 @@ from blinker import NamedSignal, Namespace
 
 _logger = logging.getLogger(__name__)
 
+
 progress = Namespace()
 
 progress_start: Final[NamedSignal] = progress.signal('start')
@@ -49,11 +48,9 @@ T_co = TypeVar('T_co', covariant=True)
 
 @runtime_checkable
 class SizedIterable(Protocol[T_co]):
-    def __iter__(self) -> Iterable[T_co]:
-        ...
+    def __iter__(self) -> Iterable[T_co]: ...
 
-    def __len__(self) -> int:
-        ...
+    def __len__(self) -> int: ...
 
 
 def _tag_text_translator(text: str) -> str:
