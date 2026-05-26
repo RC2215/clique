@@ -39,6 +39,9 @@ class Leader:
     def invoke(self, *args, **kwargs):
         pass
 
+    def add_command(self, *args, **kwargs):
+        pass
+
     def _echo(self, *args, **kwargs) -> None:  # noqa: PLR6301
         click.secho(*args, **kwargs)
 
@@ -93,5 +96,6 @@ class VoiceLeader(Leader):
         return {'invoke_without_command': True}
 
     def invoke(self, *args, **kwargs):
-        # group = self.ctx.command
-        pass
+        if self.ctx.invoked_subcommand:
+            return
+        group = self.ctx.command

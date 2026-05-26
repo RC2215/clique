@@ -1,9 +1,10 @@
 import copy
 import logging
 from collections.abc import Callable
-from functools import partial, update_wrapper
+from functools import partial, update_wrapper, wraps
 from typing import Any, Final
 
+import click
 from click import Command, Option, make_pass_decorator
 
 from .core import CliqueGroup
@@ -26,14 +27,23 @@ def _partial(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Callable[..
     return update_wrapper(partial(func, *args, **kwargs), func)
 
 
-def set_message_templates(message_templates: dict[str, str]):
+def _set_group_attr(attr_name, attr_value):
     def inner(func):
         if not isinstance(func, CliqueGroup):
-            raise CliqueException('Cannot set templates keys on non CliqueGroup object')
-        func.leader.insert_message_templates(message_templates)
+            raise CliqueException('Operation not supported on non CliqueGroup object')
+        setattr(func, attr_name, attr_value)
         return func
 
     return inner
+
+
+def set_logger(default_log_level=logging.WARNING):
+    pass
+
+
+# set_message_template - a meta key? pass_meta_key
+set_message_templates = partial(_set_group_attr, 'message_templates')
+# set_logger = partial(_set_group_attr, 'default_log_level')  # ? only boolean? no, with option to log_level!
 
 
 def make_sub_command(name: str, cmd: Command, default_map: dict[str, Any], force: bool = True) -> Command:
