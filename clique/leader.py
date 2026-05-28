@@ -17,7 +17,7 @@ class Leader:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._message_templates: dict[str, str] = {}
-        self._progress_bar_factory = progressbar  # Add type hint for progress bar
+        self._progress_bar_factory = progressbar
 
     @property
     def attrs(self) -> dict[str, Any]:
@@ -33,14 +33,11 @@ class Leader:
             return self.ctx.__progressbar__
 
     @ctx_progress_bar.setter
-    def ctx_progress_bar(self, progress_bar):
+    def ctx_progress_bar(self, progress_bar) -> None:
         assert self.ctx
         self.ctx.__progressbar__ = progress_bar
 
-    def invoke(self, *args, **kwargs):
-        pass
-
-    def add_command(self, *args, **kwargs):
+    def invoke(self, *args, **kwargs) -> None:
         pass
 
     def _echo(self, *args, **kwargs) -> None:  # noqa: PLR6301

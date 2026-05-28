@@ -25,7 +25,6 @@ class CliqueGroup(Group):
         if not isinstance(leader_class, type) or not issubclass(leader_class, Leader):
             raise CliqueException(f'{leader_class=} must be a subclass of {Leader}')
         self._leader = leader_class()
-        # file + stream + level
         self._default_log_level = default_log_level
 
         self._aliases: dict[str, str] = {}
@@ -33,6 +32,40 @@ class CliqueGroup(Group):
         self._commands_help: dict[str, str] = {}
 
         super().__init__(name, commands, **attrs, **self._leader.attrs)
+
+    def _set_logger(self) -> None:
+        if self._default_log_level is None:
+            return
+
+        def wrapper(callback):
+            @wraps(callback)
+            def callback_wrapper(verbose, *args, **kwargs):
+                verbosity = verbose * 10
+                log_level = self._default_log_level - verbosity
+                logger = logging.getLogger()
+                logger.setLevel(log_level)
+
+                handler = logging.StreamHandler(sys.stdout)
+                handler.setLevel(log_level)
+                formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+                # datefmt='%Y-%m-%d %H:%M:%S'
+                # formatter = logging.Formatter('[%(asctime)s] %(name)s - [%(levelname)s]: %(message)s')
+                # %Y-%m-%d %H:%M:%S.%f
+                # LOG_FORMAT = f'[{TIME}] {LEVEL}: ({PROCESS_ID}) {CHANNEL} ({LOCATION}): {MESSAGE}'
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+                return callback(*args, **kwargs)
+
+            return callback_wrapper
+
+        self.params.append(Option(['-v', '--verbose'], count=True, default=0))
+        self.callback = wrapper(self.callback)
+
+    def make_context(
+        self, info_name: str | None, args: list[str], parent: Context | None = None, **extra: Any
+    ) -> Context:
+        self._set_logger()
+        return super().make_context(info_name, args, parent, **extra)
 
     def add_command(
         self,
@@ -84,32 +117,3 @@ class CliqueGroup(Group):
         ctx.obj = self._leader
         super().invoke(ctx)
         self._leader.invoke()  # Rename?
-
-    def make_context(
-        self, info_name: str | None, args: list[str], parent: Context | None = None, **extra: Any
-    ) -> Context:
-        # if self._default_log_level is not None:
-        self.set_logger()
-        return super().make_context(info_name, args, parent, **extra)
-
-    def set_logger(self) -> None:
-        if self._default_log_level is None:
-            return
-
-        def wrapper(callback):
-            @wraps(callback)
-            def callback_wrapper(verbose, *args, **kwargs):
-                verbosity = verbose * 10
-                log_level = self._default_log_level - verbosity
-                logger = logging.getLogger()
-                logger.setLevel(log_level)
-
-                handler = logging.StreamHandler(sys.stdout)
-                handler.setLevel(log_level)
-                logger.addHandler(handler)
-                return callback(*args, **kwargs)
-
-            return callback_wrapper
-
-        self.params.append(Option(['-v', '--verbose'], count=True, default=0))
-        self.callback = wrapper(self.callback)
