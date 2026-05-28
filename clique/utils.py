@@ -37,7 +37,8 @@ def _set_group_attr(attr_name, attr_value):
     return inner
 
 
-def set_logger(default_log_level=logging.WARNING):
+# file??
+def set_logger(default_log_level: int = logging.WARNING, file_name: str | None = None) -> None:
     pass
 
 
@@ -54,7 +55,7 @@ def make_sub_command(name: str, cmd: Command, default_map: dict[str, Any], force
     new_command.name = name.lower().replace('_', '-')
     overridden_params: dict[str, Any] = {}
 
-    for param in new_command.params:
+    for param in new_command.params.copy():
         value = default_map.get(param.name, NOTHING)
         if value is not NOTHING:
             default_map.pop(param.name)

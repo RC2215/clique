@@ -17,6 +17,7 @@ class Leader:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._message_templates: dict[str, str] = {}
+        self._progress_bar_factory = progressbar  # Add type hint for progress bar
 
     @property
     def attrs(self) -> dict[str, Any]:
@@ -62,7 +63,7 @@ class Leader:
 
     def _start_progress_bar(self, label: str, length: int):
         assert self.ctx_progress_bar is None, 'Cannot raise several progress bars simultaneously'
-        self.ctx_progress_bar = progressbar(label=label, length=length)
+        self.ctx_progress_bar = self._progress_bar_factory(label=label, length=length)
         self.ctx_progress_bar.__enter__()  # pylint: disable=unnecessary-dunder-call
 
     def _update_progress_bar(self, step: int, position: int) -> None:

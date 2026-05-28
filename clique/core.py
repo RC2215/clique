@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections.abc import MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
@@ -13,28 +14,25 @@ _logger = logging.getLogger(__name__)
 
 
 class CliqueGroup(Group):
-    # Here? or init?
-    DEFAULT_LOG_LEVEL = logging.WARNING
-
     def __init__(
         self,
         name: str | None = None,
         commands: MutableMapping[str, Command] | Sequence[Command] | None = None,
         leader_class: Type[Leader] = Leader,
+        default_log_level: int = None,
         **attrs: Any,
     ):
         if not isinstance(leader_class, type) or not issubclass(leader_class, Leader):
             raise CliqueException(f'{leader_class=} must be a subclass of {Leader}')
-        # add message templates here?
-        # message_templates - must be on init...
-        # default_log_level
-        self.leader = leader_class()
+        self._leader = leader_class()
+        # file + stream + level
+        self._default_log_level = default_log_level
 
         self._aliases: dict[str, str] = {}
         self._commands_names: dict[str, list[str]] = {}
         self._commands_help: dict[str, str] = {}
 
-        super().__init__(name, commands, **attrs, **self.leader.attrs)
+        super().__init__(name, commands, **attrs, **self._leader.attrs)
 
     def add_command(
         self,
@@ -56,14 +54,6 @@ class CliqueGroup(Group):
         self._commands_names[name] = sorted(aliases)
         for alias in (name, *aliases):
             self._aliases[alias] = name
-
-        # add logger to the cmd???
-        # on the group! - also because we want it once for VoiceLeader?
-        # set_loger should be defined in the entry point?
-        # cmd.callback =
-
-        # self.leader.add_command(cmd, name, help_text, aliases, *args, **kwargs)
-        # in add_command to set the logger??? but it should happen on the group, not the cmd!
 
     def get_command(self, ctx: Context, cmd_name: str) -> Command | None:
         cmd_name = self._aliases.get(cmd_name, cmd_name)
@@ -91,27 +81,35 @@ class CliqueGroup(Group):
                     formatter.write_dl(rows)
 
     def invoke(self, ctx: Context) -> Any:
-        ctx.obj = self.leader
+        ctx.obj = self._leader
         super().invoke(ctx)
-        self.leader.invoke()  # Rename?
+        self._leader.invoke()  # Rename?
 
     def make_context(
         self, info_name: str | None, args: list[str], parent: Context | None = None, **extra: Any
     ) -> Context:
-        # only if set logger?!!
-        self._set_logger()
+        # if self._default_log_level is not None:
+        self.set_logger()
         return super().make_context(info_name, args, parent, **extra)
 
-    def _set_logger(self):
-        self.params.append(Option(['-v', '--verbose'], count=True, default=0))
+    def set_logger(self) -> None:
+        if self._default_log_level is None:
+            return
 
         def wrapper(callback):
             @wraps(callback)
             def callback_wrapper(verbose, *args, **kwargs):
                 verbosity = verbose * 10
-                print(verbosity, self.DEFAULT_LOG_LEVEL - verbosity)
+                log_level = self._default_log_level - verbosity
+                logger = logging.getLogger()
+                logger.setLevel(log_level)
+
+                handler = logging.StreamHandler(sys.stdout)
+                handler.setLevel(log_level)
+                logger.addHandler(handler)
                 return callback(*args, **kwargs)
 
             return callback_wrapper
 
+        self.params.append(Option(['-v', '--verbose'], count=True, default=0))
         self.callback = wrapper(self.callback)
