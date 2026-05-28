@@ -9,6 +9,7 @@ from click import Command, Context, Group, HelpFormatter, Option
 
 from .exceptions import CliqueException
 from .leader import Leader
+from .logger import ColoredStreamFormatter
 
 _logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class CliqueGroup(Group):
         name: str | None = None,
         commands: MutableMapping[str, Command] | Sequence[Command] | None = None,
         leader_class: Type[Leader] = Leader,
-        default_log_level: int = None,
+        default_log_level: int | None = None,
         **attrs: Any,
     ):
         if not isinstance(leader_class, type) or not issubclass(leader_class, Leader):
@@ -47,12 +48,7 @@ class CliqueGroup(Group):
 
                 handler = logging.StreamHandler(sys.stdout)
                 handler.setLevel(log_level)
-                formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-                # datefmt='%Y-%m-%d %H:%M:%S'
-                # formatter = logging.Formatter('[%(asctime)s] %(name)s - [%(levelname)s]: %(message)s')
-                # %Y-%m-%d %H:%M:%S.%f
-                # LOG_FORMAT = f'[{TIME}] {LEVEL}: ({PROCESS_ID}) {CHANNEL} ({LOCATION}): {MESSAGE}'
-                handler.setFormatter(formatter)
+                handler.setFormatter(ColoredStreamFormatter())
                 logger.addHandler(handler)
                 return callback(*args, **kwargs)
 

@@ -2,14 +2,6 @@ import logging
 from typing import ClassVar
 
 
-class LoggingLevel:
-    DEBUG = logging.DEBUG
-    INFO = logging.INFO
-    WARNING = logging.WARNING
-    ERROR = logging.ERROR
-    CRITICAL = logging.CRITICAL
-
-
 class ColoredStreamFormatter(logging.Formatter):
     default_msec_format = '%s.%03d'
     default_record_format = '%(asctime)s | %(levelname)s | %(name)s.%(funcName)s:%(lineno)d | %(message)s'
