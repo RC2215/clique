@@ -1,5 +1,6 @@
 import logging
-from typing import ClassVar, Any
+from os import PathLike
+from typing import ClassVar, Any, TextIO
 
 
 class BaseFormatter(logging.Formatter):
@@ -39,7 +40,7 @@ class ColoredStreamFormatter(BaseFormatter):
         return self.COLOROS_MAP.get(record.levelno, '') + formatted + self.RESET
 
 
-def set_logger(level, stream, file_path=None):
+def set_logger(level: int, stream: TextIO, file_path: str | PathLike[str] | None = None) -> None:
     """
 
     :param level:
@@ -56,7 +57,7 @@ def set_logger(level, stream, file_path=None):
     logger.addHandler(handler)
 
     if file_path:
-        file_handler = logging.FileHandler(file_path, mode='a', encoding='utf-8')
+        file_handler = logging.FileHandler(file_path, mode='a')
         file_handler.setLevel(level)
         file_handler.setFormatter(BaseFormatter())
         logger.addHandler(file_handler)
