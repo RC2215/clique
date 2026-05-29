@@ -5,4 +5,5 @@ class CliqueException(ClickException):
     pass
 
 
-# TBD: More exceptions
+class LeaderException(CliqueException):
+    pass

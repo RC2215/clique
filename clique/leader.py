@@ -10,7 +10,7 @@ from typing import Any
 import click
 from click import progressbar
 
-from . import CliqueException
+from .exceptions import LeaderException
 from .progress_notification import ProgressTracker
 
 
@@ -51,7 +51,8 @@ class Leader:
         self, text: str | None = None, key: str | None = None, values: dict[str, str] | None = None, **kwargs: Any
     ) -> None:
         if key:
-            assert not text, 'Cannot mix raw text and template key'
+            if text:
+                raise LeaderException('Cannot mix raw text and template key')
             if template := self._message_templates.get(key):
                 text = Template(template).safe_substitute(**values) if values else template
 
@@ -61,23 +62,29 @@ class Leader:
 
     def _start_progress_bar(self, label: str, length: int):
         if self.ctx_progress_bar is not None:
-            raise CliqueException('Cannot raise several progress bars simultaneously')
+            raise LeaderException('Cannot raise several progress bars simultaneously')
 
         self.ctx_progress_bar = self._progress_bar_factory(label=label, length=length)
         self.ctx_progress_bar.__enter__()  # pylint: disable=unnecessary-dunder-call
 
     def _update_progress_bar(self, step: int, position: int) -> None:
-        assert self.ctx_progress_bar, 'No ProgressBar object found for updating'
+        if self.ctx_progress_bar is None:
+            raise LeaderException('Cannot find ProgressBar object for updating')
+
         self.ctx_progress_bar.update(step, position)
 
     def _end_progress_bar(self) -> None:
-        assert self.ctx_progress_bar, 'No ProgressBar object found for stopping'
+        if self.ctx_progress_bar is None:
+            raise LeaderException('Cannot find ProgressBar object for stopping')
+
         self.ctx_progress_bar.__exit__(None, None, None)
         self.ctx_progress_bar = None
 
     @contextmanager
     def progress_notification(self, label: str):
-        assert self.ctx, 'No active Context found for progress notification'
+        if not self.ctx:
+            raise LeaderException('No active Context found for progress notification')
+
         progress_tracker = ProgressTracker(label)
         progress_tracker.track_start(callback=partial(self._start_progress_bar, label=label))
         progress_tracker.track_step(callback=self._update_progress_bar)

@@ -2,16 +2,14 @@ import copy
 import logging
 from collections.abc import Callable
 from functools import partial, update_wrapper, wraps
+from os import PathLike
 from typing import Any, Final
 
-import click
 from click import Command, Option, make_pass_decorator
 
 from .core import CliqueGroup
 from .exceptions import CliqueException
 from .leader import Leader
-
-_logger = logging.getLogger(__name__)
 
 
 class Sentinel:
@@ -37,7 +35,7 @@ def _set_group_attr(attr_name, attr_value):
     return inner
 
 
-def set_logger(default_log_level: int = logging.WARNING, file_name: str | None = None) -> None:
+def set_logger(default_log_level: int = logging.INFO, file_path: str | PathLike[str] | None = None) -> None:
     pass
 
 
