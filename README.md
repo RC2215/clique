@@ -2,4 +2,4 @@
 
 # Clique
 
-> <span style="color: #4ECDC4;"> > </span> An exclusive group. A winning leader.
+> An exclusive group. A winning leader.
