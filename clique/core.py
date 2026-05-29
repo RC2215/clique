@@ -1,9 +1,9 @@
 import logging
 import sys
-from collections.abc import MutableMapping, Sequence, Callable
+from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
-from typing import Any, Type, ParamSpec, TypeVar, Concatenate
+from typing import Any, Concatenate, ParamSpec, Type, TypeVar
 
 from click import Command, Context, Group, HelpFormatter, Option
 

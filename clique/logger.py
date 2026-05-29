@@ -1,6 +1,6 @@
 import logging
 from os import PathLike
-from typing import ClassVar, Any, TextIO
+from typing import Any, ClassVar, TextIO
 
 
 class BaseFormatter(logging.Formatter):
