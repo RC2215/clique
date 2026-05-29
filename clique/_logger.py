@@ -35,13 +35,12 @@ class ColoredStreamFormatter(BaseFormatter):
 def set_logger(level: int, stream: TextIO, file_path: str | PathLike[str] | None = None) -> None:
     """
     Configure the root logger for the entire application.
-    This function is intended to be called once at the application's entry point.
+    Note: This function is intended to be called once at the application's entry point.
 
     :param level: Logging level applied to the logger and all handlers.
     :param stream: Text stream for console logging, e.g. ``sys.stdout`` or ``sys.stderr``.
     :param file_path: Path to a log file. If provided, a file handler is added in append mode.
     """
-    # check the issue....
     logger = logging.getLogger()
     logger.setLevel(level)
 

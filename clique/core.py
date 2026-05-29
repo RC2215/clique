@@ -7,9 +7,9 @@ from typing import Any, Concatenate, ParamSpec, Type, TypeVar
 
 from click import Command, Context, Group, HelpFormatter, Option
 
+from ._logger import set_logger
 from .exceptions import CliqueException
 from .leader import Leader
-from .logger import set_logger
 
 _logger = logging.getLogger(__name__)
 
