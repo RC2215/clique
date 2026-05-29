@@ -1,25 +1,32 @@
 import logging
 import sys
-from collections.abc import MutableMapping, Sequence
+from collections.abc import MutableMapping, Sequence, Callable
 from functools import wraps
 from gettext import gettext as _
-from typing import Any, Type
+from typing import Any, Type, ParamSpec, TypeVar, Concatenate
 
 from click import Command, Context, Group, HelpFormatter, Option
 
 from .exceptions import CliqueException
 from .leader import Leader
-from .logger import ColoredStreamFormatter
+from .logger import set_logger
 
 _logger = logging.getLogger(__name__)
 
 
+P = ParamSpec('P')
+R = TypeVar('R')
+
+
 class CliqueGroup(Group):
+    callback: Callable[..., Any] | None
+
     def __init__(
         self,
         name: str | None = None,
         commands: MutableMapping[str, Command] | Sequence[Command] | None = None,
         leader_class: Type[Leader] = Leader,
+        # Add set_logger decorator with all params!
         default_log_level: int | None = None,
         **attrs: Any,
     ):
@@ -33,35 +40,23 @@ class CliqueGroup(Group):
         self._commands_help: dict[str, str] = {}
 
         super().__init__(name, commands, **attrs, **self._leader.attrs)
+        self._set_logger()
 
     def _set_logger(self) -> None:
-        if self._default_log_level is None:
+        if self._default_log_level is None or self.callback is None:
             return
 
-        def wrapper(callback):
+        def wrapper(callback: Callable[P, R], default_log_level: int) -> Callable[Concatenate[int, P], R]:
             @wraps(callback)
-            def callback_wrapper(verbose, *args, **kwargs):
+            def callback_wrapper(verbose: int, *args: P.args, **kwargs: P.kwargs) -> R:
                 verbosity = verbose * 10
-                log_level = self._default_log_level - verbosity
-                logger = logging.getLogger()
-                logger.setLevel(log_level)
-
-                handler = logging.StreamHandler(sys.stdout)
-                handler.setLevel(log_level)
-                handler.setFormatter(ColoredStreamFormatter())
-                logger.addHandler(handler)
+                set_logger(default_log_level - verbosity, sys.stdout)
                 return callback(*args, **kwargs)
 
             return callback_wrapper
 
         self.params.append(Option(['-v', '--verbose'], count=True, default=0))
-        self.callback = wrapper(self.callback)
-
-    def make_context(
-        self, info_name: str | None, args: list[str], parent: Context | None = None, **extra: Any
-    ) -> Context:
-        self._set_logger()
-        return super().make_context(info_name, args, parent, **extra)
+        self.callback = wrapper(self.callback, self._default_log_level)
 
     def add_command(
         self,
