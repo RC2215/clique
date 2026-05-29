@@ -10,6 +10,7 @@ from typing import Any
 import click
 from click import progressbar
 
+from . import CliqueException
 from .progress_notification import ProgressTracker
 
 
@@ -59,7 +60,9 @@ class Leader:
         self._echo(text, **kwargs)
 
     def _start_progress_bar(self, label: str, length: int):
-        assert self.ctx_progress_bar is None, 'Cannot raise several progress bars simultaneously'
+        if self.ctx_progress_bar is not None:
+            raise CliqueException('Cannot raise several progress bars simultaneously')
+
         self.ctx_progress_bar = self._progress_bar_factory(label=label, length=length)
         self.ctx_progress_bar.__enter__()  # pylint: disable=unnecessary-dunder-call
 

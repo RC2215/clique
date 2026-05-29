@@ -107,4 +107,4 @@ class CliqueGroup(Group):
     def invoke(self, ctx: Context) -> Any:
         ctx.obj = self._leader
         super().invoke(ctx)
-        self._leader.invoke()  # Rename?
+        self._leader.invoke()

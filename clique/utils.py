@@ -37,7 +37,6 @@ def _set_group_attr(attr_name, attr_value):
     return inner
 
 
-# file??
 def set_logger(default_log_level: int = logging.WARNING, file_name: str | None = None) -> None:
     pass
 

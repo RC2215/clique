@@ -19,7 +19,7 @@ class ColoredStreamFormatter(BaseFormatter):
     BOLD_RED = '\x1b[31;1m'
     RESET = '\x1b[0m'
 
-    COLOROS_MAP: ClassVar[dict[int, str]] = {
+    COLORS_MAP: ClassVar[dict[int, str]] = {
         logging.DEBUG: GREY,
         logging.INFO: GREY,
         logging.WARNING: YELLOW,
@@ -29,7 +29,7 @@ class ColoredStreamFormatter(BaseFormatter):
 
     def format(self, record: logging.LogRecord) -> str:
         formatted = super().format(record)
-        return self.COLOROS_MAP.get(record.levelno, '') + formatted + self.RESET
+        return self.COLORS_MAP.get(record.levelno, '') + formatted + self.RESET
 
 
 def set_logger(level: int, stream: TextIO, file_path: str | PathLike[str] | None = None) -> None:
@@ -41,7 +41,7 @@ def set_logger(level: int, stream: TextIO, file_path: str | PathLike[str] | None
     :param stream: Text stream for console logging, e.g. ``sys.stdout`` or ``sys.stderr``.
     :param file_path: Path to a log file. If provided, a file handler is added in append mode.
     """
-
+    # check the issue....
     logger = logging.getLogger()
     logger.setLevel(level)
 
