@@ -4,10 +4,6 @@ from typing import ClassVar, Any, TextIO
 
 
 class BaseFormatter(logging.Formatter):
-    """
-    TBD
-    """
-
     default_msec_format = '%s.%03d'
     default_record_format = '%(asctime)s | %(levelname)s | %(name)s.%(funcName)s:%(lineno)d | %(message)s'
 
@@ -17,10 +13,6 @@ class BaseFormatter(logging.Formatter):
 
 
 class ColoredStreamFormatter(BaseFormatter):
-    """
-    TBD
-    """
-
     GREY = '\x1b[38;20m'
     YELLOW = '\x1b[33;20m'
     RED = '\x1b[31;20m'
@@ -42,12 +34,14 @@ class ColoredStreamFormatter(BaseFormatter):
 
 def set_logger(level: int, stream: TextIO, file_path: str | PathLike[str] | None = None) -> None:
     """
+    Configure the root logger for the entire application.
+    This function is intended to be called once at the application's entry point.
 
-    :param level:
-    :param stream:
-    :param file_path:
-    :return:
+    :param level: Logging level applied to the logger and all handlers.
+    :param stream: Text stream for console logging, e.g. ``sys.stdout`` or ``sys.stderr``.
+    :param file_path: Path to a log file. If provided, a file handler is added in append mode.
     """
+
     logger = logging.getLogger()
     logger.setLevel(level)
 
