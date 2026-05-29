@@ -25,10 +25,12 @@ prompt-toolkit = "^3.0.52"
 mypy = "^2.1.0"
 ruff = "^0.15.13"
 pytest = "^9.0.3"
-isort = "^8.0.1"
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["I"]
 
 [tool.ruff.format]
 quote-style = "single"

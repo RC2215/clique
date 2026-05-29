@@ -29,7 +29,7 @@ class CliqueGroup(Group):
         # Add set_logger decorator with all params!
         default_log_level: int | None = None,
         **attrs: Any,
-    ):
+    ) -> None:
         if not isinstance(leader_class, type) or not issubclass(leader_class, Leader):
             raise CliqueException(f'{leader_class=} must be a subclass of {Leader}')
         self._leader = leader_class()
