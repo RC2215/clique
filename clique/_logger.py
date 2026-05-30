@@ -1,13 +1,7 @@
 import logging
 import sys
 from os import PathLike
-from typing import Any, ClassVar, Required, TextIO, TypedDict
-
-
-class LogSettings(TypedDict, total=False):
-    default_level: Required[int]
-    stream: TextIO
-    file_path: str | PathLike[str]
+from typing import Any, ClassVar, TextIO
 
 
 class BaseFormatter(logging.Formatter):

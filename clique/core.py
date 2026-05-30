@@ -4,11 +4,11 @@ from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
 from os import PathLike
-from typing import Any, Concatenate, ParamSpec, TextIO, Type, TypeVar
+from typing import Any, Concatenate, ParamSpec, Required, TextIO, Type, TypedDict, TypeVar
 
 from click import Command, Context, Group, HelpFormatter, Option
 
-from ._logger import LogSettings, set_logger
+from ._logger import set_logger
 from .exceptions import CliqueException
 from .leader import Leader
 
@@ -17,6 +17,12 @@ _logger = logging.getLogger(__name__)
 
 P = ParamSpec('P')
 R = TypeVar('R')
+
+
+class LogSettings(TypedDict, total=False):
+    default_level: Required[int]
+    stream: TextIO
+    file_path: str | PathLike[str]
 
 
 class CliqueGroup(Group):
