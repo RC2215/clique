@@ -3,11 +3,12 @@ import sys
 from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
-from typing import Any, Concatenate, ParamSpec, Type, TypeVar
+from os import PathLike
+from typing import Any, Concatenate, ParamSpec, TextIO, Type, TypeVar
 
 from click import Command, Context, Group, HelpFormatter, Option
 
-from ._logger import set_logger
+from ._logger import LogSettings, set_logger
 from .exceptions import CliqueException
 from .leader import Leader
 
@@ -26,37 +27,42 @@ class CliqueGroup(Group):
         name: str | None = None,
         commands: MutableMapping[str, Command] | Sequence[Command] | None = None,
         leader_class: Type[Leader] = Leader,
-        # Add set_logger decorator with all params!
-        default_log_level: int | None = None,
+        message_templates: dict[str, str] | None = None,
+        log_settings: LogSettings | None = None,
         **attrs: Any,
     ) -> None:
         if not isinstance(leader_class, type) or not issubclass(leader_class, Leader):
             raise CliqueException(f'{leader_class=} must be a subclass of {Leader}')
-        self._leader = leader_class()
-        self._default_log_level = default_log_level
+        self._leader = leader_class(message_templates)
 
         self._aliases: dict[str, str] = {}
         self._commands_names: dict[str, list[str]] = {}
         self._commands_help: dict[str, str] = {}
 
         super().__init__(name, commands, **attrs, **self._leader.attrs)
-        self._set_logger()
+        if log_settings is not None:
+            self._set_logger(**log_settings)
 
-    def _set_logger(self) -> None:
-        if self._default_log_level is None or self.callback is None:
+    def _set_logger(
+        self,
+        default_level: int | None = None,
+        stream: TextIO = sys.stdout,
+        file_path: str | PathLike[str] | None = None,
+    ) -> None:
+        if default_level is None or self.callback is None:
             return
 
-        def wrapper(callback: Callable[P, R], default_log_level: int) -> Callable[Concatenate[int, P], R]:
+        def wrapper(callback: Callable[P, R]) -> Callable[Concatenate[int, P], R]:
             @wraps(callback)
             def callback_wrapper(verbose: int, *args: P.args, **kwargs: P.kwargs) -> R:
                 verbosity = verbose * 10
-                set_logger(default_log_level - verbosity, sys.stdout)
+                set_logger(default_level - verbosity, stream, file_path)
                 return callback(*args, **kwargs)
 
             return callback_wrapper
 
         self.params.append(Option(['-v', '--verbose'], count=True, default=0))
-        self.callback = wrapper(self.callback, self._default_log_level)
+        self.callback = wrapper(self.callback)
 
     def add_command(
         self,

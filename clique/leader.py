@@ -15,9 +15,9 @@ from .progress_notification import ProgressTracker
 
 
 class Leader:
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, message_templates: dict[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._message_templates: dict[str, str] = {}
+        self._message_templates: dict[str, str] = message_templates if message_templates is not None else {}
         self._progress_bar_factory = progressbar
 
     @property
@@ -43,9 +43,6 @@ class Leader:
 
     def _echo(self, *args, **kwargs) -> None:  # noqa: PLR6301
         click.secho(*args, **kwargs)
-
-    def insert_message_templates(self, templates: dict[str, str]):
-        self._message_templates.update(templates)
 
     def send_message(
         self, text: str | None = None, key: str | None = None, values: dict[str, str] | None = None, **kwargs: Any
