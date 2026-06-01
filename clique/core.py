@@ -75,7 +75,7 @@ class CliqueGroup(Group):
         cmd: Command,
         name: str | None = None,
         help_text: str | None = None,
-        aliases: list | None = None,
+        aliases: list[str] | None = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -108,8 +108,9 @@ class CliqueGroup(Group):
 
             rows = []
             for subcommand, cmd in commands:
-                subcommand = f'{subcommand} ({", ".join(self._commands_names[subcommand])})'
                 cmd_help = self._commands_help.get(subcommand) or cmd.get_short_help_str(limit)
+                if aliases := self._commands_names[subcommand]:
+                    subcommand = f'{subcommand} ({", ".join(aliases)})'
                 rows.append((subcommand, cmd_help))
 
             if rows:
