@@ -31,9 +31,8 @@ def make_sub_command(name: str, cmd: Command, default_map: dict[str, Any], force
     overridden_params: dict[str, Any] = {}
 
     for param in new_command.params:
-        value = default_map.get(param.name, NOTHING)
+        value = default_map.pop(param.name, NOTHING)
         if value is not NOTHING:
-            default_map.pop(param.name)
             if force:
                 overridden_params[param.name] = value
             else:
