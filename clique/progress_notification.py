@@ -126,6 +126,7 @@ class ProgressTracker:
 def progress_generator(iterable: Iterable[T_co], label: str) -> Generator[T_co, None, None]:
     """
     Wrap an iterable and emit progress notifications during iteration.
+
     :param iterable: Sized iterable object to be monitored.
     :param label: Unique string identifier used for progress signals.
     :return: A generator yielding items from the iterable.

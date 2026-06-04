@@ -15,6 +15,10 @@ from .progress_notification import ProgressTracker
 
 
 class Leader:
+    """
+    TBD
+    """
+
     def __init__(self, message_templates: dict[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._message_templates: dict[str, str] = message_templates if message_templates is not None else {}
@@ -47,6 +51,15 @@ class Leader:
     def send_message(
         self, text: str | None = None, key: str | None = None, values: dict[str, str] | None = None, **kwargs: Any
     ) -> None:
+        """
+        TBD
+
+        :param text:
+        :param key:
+        :param values:
+        :param kwargs:
+        :return:
+        """
         if key:
             if text:
                 raise LeaderException('Cannot mix raw text and template key')
@@ -79,6 +92,12 @@ class Leader:
 
     @contextmanager
     def progress_notification(self, label: str):
+        """
+        TBD
+
+        :param label:
+        :return:
+        """
         if not self.ctx:
             raise LeaderException('No active Context found for progress notification')
 

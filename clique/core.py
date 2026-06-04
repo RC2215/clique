@@ -26,6 +26,10 @@ class LogSettings(TypedDict, total=False):
 
 
 class CliqueGroup(Group):
+    """
+    TBD
+    """
+
     callback: Callable[..., Any] | None
 
     def __init__(
@@ -79,6 +83,17 @@ class CliqueGroup(Group):
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """
+        TBD
+
+        :param cmd:
+        :param name:
+        :param help_text:
+        :param aliases:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         name = name or cmd.name
         super().add_command(cmd, name)
         assert name is not None

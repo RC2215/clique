@@ -29,13 +29,13 @@ def make_sub_command(
     Create a new command based on an existing one, with predefined parameter values.
     Note: The base command is deep-copied to avoid mutating the original instance.
 
-    :param name: Name of the new command, "_" are replaced with "-".
-    :param cmd: Base Click command to inherit from.
+    :param name: Name of the new command, underscores are replaced with hyphens.
+    :param cmd: Base Click command instance to inherit from.
     :param default_map: Dictionary mapping parameter names to their new default values.
     :param help_text: Optional updated help text for the new command.
     :param force: If True, overridden parameters are removed and bound directly to the callback.
                   If False, default values are updated on the parameters and Options are hidden.
-    :return: A new Click command.
+    :return: A new Click command instance.
     """
     if unknown_params := (set(default_map) - set(param.name for param in cmd.params)):
         raise CliqueException(f'Unknown {cmd} params passed: {", ".join(unknown_params)}')
