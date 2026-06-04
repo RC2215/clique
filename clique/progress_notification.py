@@ -64,8 +64,8 @@ class ProgressNotifier:
     This class acts as the publisher in the publish-subscribe pattern.
     It emits progress signals via ``notify_start``, ``notify_step``, and ``notify_stop``.
 
-    :param label: A unique string identifier shared with trackers.
-    :param length: The total number of expected steps.
+    :param label: Unique string identifier shared with trackers.
+    :param length: Total number of expected steps.
     """
 
     def __init__(self, label: str, length: int) -> None:
@@ -100,7 +100,7 @@ class ProgressTracker:
     It registers callbacks for progress signals via ``track_start``, ``track_step``,
     and ``track_stop``. It also allows stopping observation of a task via ``untrack``.
 
-    :param label: The string identifier defined by the notifier.
+    :param label: String identifier defined by the notifier.
     """
 
     def __init__(self, label: str) -> None:
@@ -126,8 +126,8 @@ class ProgressTracker:
 def progress_generator(iterable: Iterable[T_co], label: str) -> Generator[T_co, None, None]:
     """
     Wrap an iterable and emit progress notifications during iteration.
-    :param iterable: The sized iterable object to be monitored.
-    :param label: The unique string identifier used for progress signals.
+    :param iterable: Sized iterable object to be monitored.
+    :param label: Unique string identifier used for progress signals.
     :return: A generator yielding items from the iterable.
     """
     if not isinstance(iterable, SizedIterable):
