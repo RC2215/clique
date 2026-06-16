@@ -4,9 +4,10 @@ from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
 from os import PathLike
-from typing import Any, Concatenate, ParamSpec, Required, TextIO, TypedDict, TypeVar
+from typing import Any, Concatenate, ParamSpec, TextIO, TypedDict, TypeVar
 
 from click import Command, Context, Group, HelpFormatter, Option
+from typing_extensions import Required
 
 from ._logger import set_logger
 from .exceptions import CliqueException
