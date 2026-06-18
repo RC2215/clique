@@ -81,8 +81,6 @@ class CliqueGroup(Group):
         name: str | None = None,
         help_text: str | None = None,
         aliases: list[str] | None = None,
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
         """
         TBD
@@ -91,15 +89,13 @@ class CliqueGroup(Group):
         :param name:
         :param help_text:
         :param aliases:
-        :param args:
-        :param kwargs:
         :return:
         """
         name = name or cmd.name
         super().add_command(cmd, name)
         assert name is not None
 
-        if help_text:
+        if help_text is not None:
             self._commands_help[name] = help_text
 
         aliases = aliases or []
@@ -124,7 +120,8 @@ class CliqueGroup(Group):
 
             rows = []
             for subcommand, cmd in commands:
-                cmd_help = self._commands_help.get(subcommand) or cmd.get_short_help_str(limit)
+                if (cmd_help := self._commands_help.get(subcommand)) is None:
+                    cmd_help = cmd.get_short_help_str(limit)
                 if aliases := self._commands_names[subcommand]:
                     subcommand = f'{subcommand} ({", ".join(aliases)})'
                 rows.append((subcommand, cmd_help))

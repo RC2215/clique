@@ -4,25 +4,67 @@
 
 > An exclusive group. A winning leader.
 
-**Clique** is an extension for [Click](https://click.palletsprojects.com/) [TBD].
+**Clique** is a modular extension for [Click](https://click.palletsprojects.com/) [TBD].
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## Table of Contents
-- [Features](#features)
+- [Key Features](#key-features)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
+- [Example](#example)
 - [License](#license)
 
-## Features
+## Key Features
 [TBD]
 
 ## Installation
 [TBD]
 
-## Quick Start
-[TBD]
+## Example
+
+```python
+import logging
+from time import sleep
+
+import click
+
+from clique import CliqueGroup, clone_command, pass_leader, progress_generator
+
+_logger = logging.getLogger(__name__)
+
+
+def get_package():
+    for eta in progress_generator(range(2215), 'implement_package'):
+        sleep(eta)
+    return 'Clique'
+
+
+@click.command(name='command')
+@click.option('-q', '--question', help='Help me help you', required=True)
+@pass_leader
+def cmd(leader, question):
+    """
+    Answer some of your questions about Clique
+    """
+    with leader.progress_notification('implement_package'):
+        get_package()
+    leader.send_message(key='task_completed', values={'completion_time': 'now'})
+
+    leader.send_message(f'Check the docs for the answer to your question: "{question}"')
+
+
+new_cmd = clone_command(cmd, 'clone-it', default_map={'question': 'How do I clone an exiting command?'})
+
+
+@click.group(cls=CliqueGroup, log_settings={'default_level': logging.DEBUG})
+def clique_group():
+    _logger.warning('Colorized logs just started...')
+
+
+clique_group.add_command(cmd, name='demo', aliases=['ex', 'am', 'ple'])
+clique_group.add_command(new_cmd, help_text='')
+```
 
 ## License
 
