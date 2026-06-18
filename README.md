@@ -40,10 +40,10 @@ def get_package():
     return 'Clique'
 
 
-@click.command(name='command')
+@click.command(name='cmd')
 @click.option('-q', '--question', help='Help me help you', required=True)
 @pass_leader
-def cmd(leader, question):
+def command(leader, question):
     """
     Answer some of your questions about Clique
     """
@@ -54,16 +54,16 @@ def cmd(leader, question):
     leader.send_message(f'Check the docs for the answer to your question: "{question}"')
 
 
-new_cmd = clone_command(cmd, 'clone-it', default_map={'question': 'How do I clone an exiting command?'})
+new_command = clone_command(command, 'clone-it', default_map={'question': 'How do I clone an exiting command?'})
 
 
 @click.group(cls=CliqueGroup, log_settings={'default_level': logging.DEBUG})
-def clique_group():
+def group():
     _logger.warning('Colorized logs just started...')
 
 
-clique_group.add_command(cmd, name='demo', aliases=['ex', 'am', 'ple'])
-clique_group.add_command(new_cmd, help_text='')
+group.add_command(command, name='demo', aliases=['ex', 'am', 'ple'])
+group.add_command(new_command, help_text='')
 ```
 
 ## License
