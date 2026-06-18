@@ -54,7 +54,7 @@ def command(leader, question):
     leader.send_message(f'Check the docs for the answer to your question: "{question}"')
 
 
-new_command = clone_command(command, 'clone', default_map={'question': 'How do I clone a command?'})
+new_command = clone_command(command, 'clone', default_map={'question': 'How to clone a cmd?'})
 
 
 @click.group(cls=CliqueGroup, log_settings={'default_level': logging.DEBUG})
