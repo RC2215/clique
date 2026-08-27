@@ -4,14 +4,15 @@ from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
 from os import PathLike
-from typing import Any, Concatenate, ParamSpec, TextIO, TypedDict, TypeVar
+from typing import Any, Concatenate, ParamSpec, TextIO, TypeVar, cast
 
 from click import Command, Context, Group, HelpFormatter, Option
-from typing_extensions import Required
 
 from ._logger import set_logger
+from ._typing import LogSettings
 from .exceptions import CliqueException
 from .leader import Leader
+from .utils import _set_leader
 
 _logger = logging.getLogger(__name__)
 
@@ -20,22 +21,18 @@ P = ParamSpec('P')
 R = TypeVar('R')
 
 
-class LogSettings(TypedDict, total=False):
-    default_level: Required[int]
-    stream: TextIO
-    file_path: str | PathLike[str]
-
-
 class CliqueGroup(Group):
     """
-    TBD
+    An exclusive group.
 
-    :param name:
-    :param commands:
-    :param leader_class:
-    :param message_templates:
-    :param log_settings:
-    :param attrs:
+    This class extends the Click's :class:`Group` functionality.
+
+    :param name: Name of the group command.
+    :param commands: Dictionary or list of :class:`Command` objects.
+    :param leader_class: :class:`Leader` class name that manages this group.
+    :param message_templates: Dictionary mapping a string key to a string template, passing to the :class:`Leader`.
+    :param log_settings: Dictionary for setting a logger. Keys: default_level (Required), stream, file_path.
+    :param attrs: Additional keyword attributes overriding attributes of :class:`Group`.
     """
 
     callback: Callable[..., Any] | None
@@ -58,6 +55,9 @@ class CliqueGroup(Group):
         self._commands_help: dict[str, str] = {}
 
         super().__init__(name, commands, **attrs, **self._leader.attrs)
+        if isinstance(commands, Sequence) and len(self.commands) < len(commands):
+            raise CliqueException('Conflicting names detected in the provided commands')
+
         if log_settings is not None:
             self._set_logger(**log_settings)
 
@@ -67,15 +67,8 @@ class CliqueGroup(Group):
         stream: TextIO = sys.stdout,
         file_path: str | PathLike[str] | None = None,
     ) -> None:
-        """
-        TPD
-
-        :param default_level:
-        :param stream:
-        :param file_path:
-        """
         if default_level is None or self.callback is None:
-            return
+            raise CliqueException('Missing default level or group callback for logger setting')
 
         def wrapper(callback: Callable[P, R]) -> Callable[Concatenate[int, P], R]:
             @wraps(callback)
@@ -84,7 +77,7 @@ class CliqueGroup(Group):
                 set_logger(default_level - verbosity, stream, file_path)
                 return callback(*args, **kwargs)
 
-            return callback_wrapper
+            return cast(Callable[Concatenate[int, P], R], callback_wrapper)
 
         self.params.append(Option(['-v', '--verbose'], count=True, default=0))
         self.callback = wrapper(self.callback)
@@ -97,24 +90,27 @@ class CliqueGroup(Group):
         aliases: list[str] | None = None,
     ) -> None:
         """
-        TBD
+        Register a :class:`Command` with the group.
 
-        :param cmd:
-        :param name:
-        :param help_text:
-        :param aliases:
+        :param cmd: Command instance to register with the group.
+        :param name: Overrides the default command's name.
+        :param help_text: Overrides the default command's help text.
+        :param aliases: Alternative names that can be used to invoke the command.
         """
         name = name or cmd.name
+        aliases = aliases or []
+        for cmd_name in (name, *aliases):
+            if cmd_name in self.commands or cmd_name in self._aliases:
+                raise CliqueException(f'A command named {cmd_name!r} already exists')
+
         super().add_command(cmd, name)
         assert name is not None
 
         if help_text is not None:
             self._commands_help[name] = help_text
 
-        aliases = aliases or []
+        self._aliases.update({alias: name for alias in aliases})
         self._commands_names[name] = sorted(aliases)
-        for alias in (name, *aliases):
-            self._aliases[alias] = name
 
     def get_command(self, ctx: Context, cmd_name: str) -> Command | None:
         cmd_name = self._aliases.get(cmd_name, cmd_name)
@@ -135,7 +131,7 @@ class CliqueGroup(Group):
             for subcommand, cmd in commands:
                 if (cmd_help := self._commands_help.get(subcommand)) is None:
                     cmd_help = cmd.get_short_help_str(limit)
-                if aliases := self._commands_names[subcommand]:
+                if aliases := self._commands_names.get(subcommand):
                     subcommand = f'{subcommand} ({", ".join(aliases)})'
                 rows.append((subcommand, cmd_help))
 
@@ -144,6 +140,7 @@ class CliqueGroup(Group):
                     formatter.write_dl(rows)
 
     def invoke(self, ctx: Context) -> Any:
-        ctx.obj = self._leader
-        super().invoke(ctx)
+        _set_leader(ctx, self._leader)
+        result = super().invoke(ctx)
         self._leader.invoke()
+        return result

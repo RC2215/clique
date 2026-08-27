@@ -13,7 +13,6 @@ license = "MIT"
 python = "^3.10"
 click = "^8.4.0"
 blinker = "^1.9.0"
-contextvars = "^2.4"
 
 [tool.poetry.group.leaders]
 optional = true
@@ -28,13 +27,22 @@ ruff = "^0.15.13"
 pytest = "^9.0.3"
 
 [tool.ruff]
+target-version = "py310"
 line-length = 120
+show-fixes = true
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP", "W", "ICN"]
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.mypy]
+python_version = "3.10"
+files = ["clique"]
+strict = true
+show_error_codes = true
+disallow_subclassing_any = false
 
 [build-system]
 requires = ["poetry-core"]
