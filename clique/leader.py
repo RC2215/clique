@@ -122,3 +122,15 @@ class Leader:
             raise
         finally:
             progress_tracker.untrack()
+
+
+class VoiceLeader(Leader):
+    @property
+    def attrs(self) -> dict[str, Any]:
+        return {'invoke_without_command': True}
+
+    def invoke(self, *args, **kwargs):
+        if self.ctx.invoked_subcommand:
+            return
+        # ?
+        group = self.ctx.command

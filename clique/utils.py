@@ -1,12 +1,15 @@
 from collections.abc import Callable
 from copy import copy
-from functools import partial, update_wrapper
+from functools import partial, update_wrapper, wraps
 from typing import Any
 
-from click import Command, make_pass_decorator
+import click
+from click import Command
 
 from .exceptions import CliqueException
 from .leader import Leader
+
+LEADER_KEY = f'{__name__}.leader'
 
 COMMAND_ATTR_NAMES = {
     'context_settings',
@@ -20,7 +23,28 @@ COMMAND_ATTR_NAMES = {
     'deprecated',
 }
 
-pass_leader = make_pass_decorator(Leader)
+
+def set_leader(ctx: click.Context, leader: Leader) -> None:
+    ctx.meta[LEADER_KEY] = leader
+
+
+def find_leader() -> Leader | None:
+    ctx = click.get_current_context(silent=True)
+    if ctx is None:
+        return None
+    return ctx.meta.get(LEADER_KEY)
+
+
+# Should pass via invoke??? like the original is?
+# Example
+def pass_leader(func):
+    @wraps(func)
+    def new_func(*args, **kwargs):
+        if (leader := find_leader()) is None:
+            raise CliqueException('No Leader object found')
+        return func(leader, *args, **kwargs)
+
+    return new_func
 
 
 def _partial(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Callable[..., Any]:
