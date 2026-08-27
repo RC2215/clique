@@ -1,11 +1,14 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import partial
 from string import Template
 from typing import Any
 
 import click
-from click import progressbar
+from click import Context, get_current_context
+from click import progressbar as create_progressbar
 
+from ._typing import ProgressBar
 from .exceptions import LeaderException
 from .progress_notification import ProgressTracker
 
@@ -22,25 +25,25 @@ class Leader:
     def __init__(self, message_templates: dict[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._message_templates: dict[str, str] = message_templates if message_templates is not None else {}
-        self._progress_bar_factory = progressbar
+        self._progressbar_factory = create_progressbar
+        self._progressbar_attr_name = '__progressbar__'
 
     @property
     def attrs(self) -> dict[str, Any]:
         return {}
 
     @property
-    def ctx(self):
-        return click.get_current_context(silent=True)
+    def ctx(self) -> Context | None:
+        return get_current_context(silent=True)
 
     @property
-    def ctx_progress_bar(self):
-        if hasattr(self.ctx, '__progressbar__'):
-            return self.ctx.__progressbar__
+    def ctx_progressbar(self) -> ProgressBar[Any] | None:
+        return getattr(self.ctx, self._progressbar_attr_name, None)
 
-    @ctx_progress_bar.setter
-    def ctx_progress_bar(self, progress_bar) -> None:
+    @ctx_progressbar.setter
+    def ctx_progressbar(self, progressbar: ProgressBar[Any] | None) -> None:
         assert self.ctx
-        self.ctx.__progressbar__ = progress_bar
+        setattr(self.ctx, self._progressbar_attr_name, progressbar)
 
     def invoke(self, *args: Any, **kwargs: Any) -> None:
         """
@@ -81,28 +84,28 @@ class Leader:
             return
         self._echo(text, **kwargs)
 
-    def _start_progress_bar(self, label: str, length: int):
-        if self.ctx_progress_bar is not None:
+    def _start_progressbar(self, label: str, length: int) -> None:
+        if self.ctx_progressbar is not None:
             raise LeaderException('Cannot raise several progress bars simultaneously')
 
-        self.ctx_progress_bar = self._progress_bar_factory(label=label, length=length)
-        self.ctx_progress_bar.__enter__()  # pylint: disable=unnecessary-dunder-call
+        self.ctx_progressbar = self._progressbar_factory(label=label, length=length)
+        self.ctx_progressbar.__enter__()  # pylint: disable=unnecessary-dunder-call
 
-    def _update_progress_bar(self, step: int, position: int) -> None:
-        if self.ctx_progress_bar is None:
+    def _update_progressbar(self, step: int, position: int) -> None:
+        if self.ctx_progressbar is None:
             raise LeaderException('Cannot find ProgressBar object for updating')
 
-        self.ctx_progress_bar.update(step, position)
+        self.ctx_progressbar.update(step, position)
 
-    def _end_progress_bar(self) -> None:
-        if self.ctx_progress_bar is None:
+    def _end_progressbar(self) -> None:
+        if self.ctx_progressbar is None:
             raise LeaderException('Cannot find ProgressBar object for stopping')
 
-        self.ctx_progress_bar.__exit__(None, None, None)
-        self.ctx_progress_bar = None
+        self.ctx_progressbar.__exit__(None, None, None)
+        self.ctx_progressbar = None
 
     @contextmanager
-    def progress_notification(self, label: str):
+    def progress_notification(self, label: str) -> Iterator[None]:
         """
         TBD
 
@@ -112,13 +115,24 @@ class Leader:
             raise LeaderException('No active Context found for progress notification')
 
         progress_tracker = ProgressTracker(label)
-        progress_tracker.track_start(callback=partial(self._start_progress_bar, label=label))
-        progress_tracker.track_step(callback=self._update_progress_bar)
-        progress_tracker.track_stop(callback=self._end_progress_bar)
+        progress_tracker.track_start(callback=partial(self._start_progressbar, label=label))
+        progress_tracker.track_step(callback=self._update_progressbar)
+        progress_tracker.track_stop(callback=self._end_progressbar)
         try:
             yield
         except Exception:
-            self.ctx_progress_bar = None
+            self.ctx_progressbar = None
             raise
         finally:
             progress_tracker.untrack()
+
+
+class VoiceLeader(Leader):
+    @property
+    def attrs(self) -> dict[str, Any]:
+        return {'invoke_without_command': True}
+
+    def invoke(self, *args: Any, **kwargs: Any) -> None:
+        assert self.ctx
+        if self.ctx.invoked_subcommand:
+            return super().invoke(*args, **kwargs)

@@ -29,12 +29,12 @@ from time import sleep
 
 import click
 
-from clique import CliqueGroup, clone_command, pass_leader, progress_generator
+from clique import CliqueGroup, Leader, clone_command, pass_leader, progress_generator
 
 _logger = logging.getLogger(__name__)
 
 
-def get_package():
+def get_package() -> str:
     for eta in progress_generator(range(2215), 'package_implementation'):
         sleep(eta)
     return 'Clique'
@@ -43,7 +43,7 @@ def get_package():
 @click.command(name='cmd')
 @click.option('-q', '--question', help='Help me help you', required=True)
 @pass_leader
-def command(leader, question):
+def command(leader: Leader, question: str) -> None:
     """
     Answer some of your questions about Clique
     """
@@ -58,7 +58,7 @@ new_command = clone_command(command, 'clone', overrides={'question': 'How do I c
 
 
 @click.group(cls=CliqueGroup, log_settings={'default_level': logging.DEBUG})
-def group():
+def group() -> None:
     _logger.warning('Colorized logs have just started...')
 
 

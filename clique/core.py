@@ -4,26 +4,21 @@ from collections.abc import Callable, MutableMapping, Sequence
 from functools import wraps
 from gettext import gettext as _
 from os import PathLike
-from typing import Any, Concatenate, ParamSpec, TextIO, TypedDict, TypeVar
+from typing import Any, Concatenate, ParamSpec, TextIO, TypeVar, cast
 
 from click import Command, Context, Group, HelpFormatter, Option
-from typing_extensions import Required
 
 from ._logger import set_logger
+from ._typing import LogSettings
 from .exceptions import CliqueException
 from .leader import Leader
+from .utils import _set_leader
 
 _logger = logging.getLogger(__name__)
 
 
 P = ParamSpec('P')
 R = TypeVar('R')
-
-
-class LogSettings(TypedDict, total=False):
-    default_level: Required[int]
-    stream: TextIO
-    file_path: str | PathLike[str]
 
 
 class CliqueGroup(Group):
@@ -84,7 +79,7 @@ class CliqueGroup(Group):
                 set_logger(default_level - verbosity, stream, file_path)
                 return callback(*args, **kwargs)
 
-            return callback_wrapper
+            return cast(Callable[Concatenate[int, P], R], callback_wrapper)
 
         self.params.append(Option(['-v', '--verbose'], count=True, default=0))
         self.callback = wrapper(self.callback)
@@ -144,6 +139,6 @@ class CliqueGroup(Group):
                     formatter.write_dl(rows)
 
     def invoke(self, ctx: Context) -> Any:
-        ctx.obj = self._leader
+        _set_leader(ctx, self._leader)
         super().invoke(ctx)
         self._leader.invoke()

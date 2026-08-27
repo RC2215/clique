@@ -28,30 +28,25 @@ Functions:
 
 import logging
 import uuid
-from collections.abc import Callable, Generator, Iterable, Iterator
+from collections.abc import Callable, Generator, Iterable
 from contextvars import ContextVar
 from functools import partialmethod, wraps
-from typing import Any, Final, Protocol, TypeVar, runtime_checkable
+from typing import Any, Final, TypeVar
 
 from blinker import NamedSignal, Namespace
 
+from ._typing import SizedIterable
+
 _logger = logging.getLogger(__name__)
-
-
-progress = Namespace()
-
-progress_start: Final[NamedSignal] = progress.signal('start')
-progress_step: Final[NamedSignal] = progress.signal('step')
-progress_stop: Final[NamedSignal] = progress.signal('stop')
 
 T_co = TypeVar('T_co', covariant=True)
 
 
-@runtime_checkable
-class SizedIterable(Protocol[T_co]):
-    def __iter__(self) -> Iterator[T_co]: ...
+_progress = Namespace()
 
-    def __len__(self) -> int: ...
+_progress_start: Final[NamedSignal] = _progress.signal('start')
+_progress_step: Final[NamedSignal] = _progress.signal('step')
+_progress_stop: Final[NamedSignal] = _progress.signal('stop')
 
 
 _context_ident: ContextVar[str] = ContextVar('ident')
@@ -87,19 +82,19 @@ class ProgressNotifier:
     def notify_start(self) -> None:
         assert not self._active
         self._active = True
-        progress_start.send(self._tag, length=self._length)
+        _progress_start.send(self._tag, length=self._length)
 
     def notify_step(self, step: int = 1) -> None:
         assert self._active
         step = min(step, self._length - self._position)
         self._position += step
-        progress_step.send(self._tag, step=step, position=self._position)
+        _progress_step.send(self._tag, step=step, position=self._position)
 
     def notify_stop(self) -> None:
         assert self._active
         self._active = False
         self._position = 0
-        progress_stop.send(self._tag)
+        _progress_stop.send(self._tag)
 
 
 class ProgressTracker:
@@ -123,12 +118,12 @@ class ProgressTracker:
 
         signal.connect(_callback, self._tag, weak=False)
 
-    track_start = partialmethod(_track, signal=progress_start)
-    track_step = partialmethod(_track, signal=progress_step)
-    track_stop = partialmethod(_track, signal=progress_stop)
+    track_start = partialmethod(_track, signal=_progress_start)
+    track_step = partialmethod(_track, signal=_progress_step)
+    track_stop = partialmethod(_track, signal=_progress_stop)
 
     def untrack(self) -> None:
-        for progress_signal in progress.values():
+        for progress_signal in _progress.values():
             for receiver in list(progress_signal.receivers_for(self._tag)):
                 progress_signal.disconnect(receiver, self._tag)
 

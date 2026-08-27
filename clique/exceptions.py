@@ -1,4 +1,4 @@
-from click import ClickException
+from click.exceptions import ClickException
 
 
 class CliqueException(ClickException):
