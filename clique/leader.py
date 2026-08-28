@@ -129,6 +129,6 @@ class VoiceLeader(Leader):
     def attrs(self) -> dict[str, Any]:
         return {'invoke_without_command': True}
 
-    def invoke(self, *args, **kwargs):
+    def invoke(self, *args: Any, **kwargs: Any) -> None:
         if self.ctx.invoked_subcommand:
-            return  # Direct command execution behaves the same as in the base group
+            return super().invoke(*args, **kwargs)
