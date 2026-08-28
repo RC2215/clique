@@ -1,12 +1,16 @@
 from collections.abc import Callable
 from copy import copy
 from functools import partial, update_wrapper, wraps
-from typing import Any
+from typing import Any, Concatenate, ParamSpec, TypeVar
 
 from click import Command, Context, get_current_context
 
 from .exceptions import CliqueException
 from .leader import Leader
+
+P = ParamSpec('P')
+R = TypeVar('R')
+
 
 LEADER_KEY = f'{__name__}.leader'
 
@@ -27,9 +31,13 @@ def _set_leader(ctx: Context, leader: Leader) -> None:
     ctx.meta[LEADER_KEY] = leader
 
 
-def pass_leader(func):
+def pass_leader(func: Callable[Concatenate[Leader, P], R]) -> Callable[P, R]:
+    """
+    Inject the current Leader instance into the decorated callback.
+    """
+
     @wraps(func)
-    def new_func(*args, **kwargs):
+    def new_func(*args: P.args, **kwargs: P.kwargs) -> R:
         ctx = get_current_context(silent=True)
         if ctx is None or (leader := ctx.meta.get(LEADER_KEY)) is None:
             raise CliqueException('No Leader object found')
