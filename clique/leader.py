@@ -131,6 +131,5 @@ class VoiceLeader(Leader):
 
     def invoke(self, *args, **kwargs):
         if self.ctx.invoked_subcommand:
-            return
-        # ?
+            return  # Direct command execution behaves the same as in the base group
         group = self.ctx.command

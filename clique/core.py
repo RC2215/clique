@@ -145,8 +145,6 @@ class CliqueGroup(Group):
                     formatter.write_dl(rows)
 
     def invoke(self, ctx: Context) -> Any:
-        print('######### invoke')
         _set_leader(ctx, self._leader)
-        # ctx.obj = self._leader
         super().invoke(ctx)
         self._leader.invoke()
