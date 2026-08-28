@@ -24,25 +24,22 @@ COMMAND_ATTR_NAMES = {
 }
 
 
-def set_leader(ctx: click.Context, leader: Leader) -> None:
+def _set_leader(ctx: click.Context, leader: Leader) -> None:
     ctx.meta[LEADER_KEY] = leader
 
 
 def find_leader() -> Leader | None:
     ctx = click.get_current_context(silent=True)
-    if ctx is None:
-        return None
-    return ctx.meta.get(LEADER_KEY)
+    return ctx.meta.get(LEADER_KEY) if ctx else None
 
 
-# Should pass via invoke??? like the original is?
-# Example
 def pass_leader(func):
     @wraps(func)
     def new_func(*args, **kwargs):
-        if (leader := find_leader()) is None:
+        ctx = click.get_current_context(silent=True)
+        if ctx is None or (leader := ctx.meta.get(LEADER_KEY)) is None:
             raise CliqueException('No Leader object found')
-        return func(leader, *args, **kwargs)
+        return ctx.invoke(func, leader, *args, **kwargs)
 
     return new_func
 

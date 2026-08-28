@@ -12,7 +12,7 @@ from typing_extensions import Required
 from ._logger import set_logger
 from .exceptions import CliqueException
 from .leader import Leader
-from .utils import set_leader
+from .utils import _set_leader
 
 _logger = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ class CliqueGroup(Group):
 
     def invoke(self, ctx: Context) -> Any:
         print('######### invoke')
-        set_leader(ctx, self._leader)
+        _set_leader(ctx, self._leader)
         # ctx.obj = self._leader
         super().invoke(ctx)
         self._leader.invoke()
