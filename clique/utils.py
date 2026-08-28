@@ -27,11 +27,6 @@ def _set_leader(ctx: Context, leader: Leader) -> None:
     ctx.meta[LEADER_KEY] = leader
 
 
-def find_leader() -> Leader | None:
-    ctx = get_current_context(silent=True)
-    return ctx.meta.get(LEADER_KEY) if ctx else None
-
-
 def pass_leader(func):
     @wraps(func)
     def new_func(*args, **kwargs):
