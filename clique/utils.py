@@ -33,7 +33,7 @@ def _set_leader(ctx: Context, leader: Leader) -> None:
 
 def pass_leader(func: Callable[Concatenate[Leader, P], R]) -> Callable[P, R]:
     """
-    Inject the current Leader instance into the decorated callback.
+    Inject the current Leader instance into the decorated callback, as the first positional argument.
     """
 
     @wraps(func)
