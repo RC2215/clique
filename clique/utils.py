@@ -3,8 +3,7 @@ from copy import copy
 from functools import partial, update_wrapper, wraps
 from typing import Any
 
-import click
-from click import Command
+from click import Command, Context, get_current_context
 
 from .exceptions import CliqueException
 from .leader import Leader
@@ -24,19 +23,19 @@ COMMAND_ATTR_NAMES = {
 }
 
 
-def _set_leader(ctx: click.Context, leader: Leader) -> None:
+def _set_leader(ctx: Context, leader: Leader) -> None:
     ctx.meta[LEADER_KEY] = leader
 
 
 def find_leader() -> Leader | None:
-    ctx = click.get_current_context(silent=True)
+    ctx = get_current_context(silent=True)
     return ctx.meta.get(LEADER_KEY) if ctx else None
 
 
 def pass_leader(func):
     @wraps(func)
     def new_func(*args, **kwargs):
-        ctx = click.get_current_context(silent=True)
+        ctx = get_current_context(silent=True)
         if ctx is None or (leader := ctx.meta.get(LEADER_KEY)) is None:
             raise CliqueException('No Leader object found')
         return ctx.invoke(func, leader, *args, **kwargs)
