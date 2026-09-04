@@ -143,7 +143,9 @@ def progress_generator(iterable: Iterable[T_co], label: str) -> Generator[T_co, 
 
     progress_notifier = ProgressNotifier(label, len(iterable))
     progress_notifier.notify_start()
-    for item in iterable:
-        yield item
-        progress_notifier.notify_step()
-    progress_notifier.notify_stop()
+    try:
+        for item in iterable:
+            yield item
+            progress_notifier.notify_step()
+    finally:
+        progress_notifier.notify_stop()
