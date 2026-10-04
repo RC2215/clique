@@ -70,7 +70,7 @@ class CliqueGroup(Group):
         :param file_path:
         """
         if default_level is None or self.callback is None:
-            return
+            raise CliqueException('Missing default level or group callback for logger setting')
 
         def wrapper(callback: Callable[P, R]) -> Callable[Concatenate[int, P], R]:
             @wraps(callback)
@@ -130,7 +130,7 @@ class CliqueGroup(Group):
             for subcommand, cmd in commands:
                 if (cmd_help := self._commands_help.get(subcommand)) is None:
                     cmd_help = cmd.get_short_help_str(limit)
-                if aliases := self._commands_names[subcommand]:
+                if aliases := self._commands_names.get(subcommand):
                     subcommand = f'{subcommand} ({", ".join(aliases)})'
                 rows.append((subcommand, cmd_help))
 
@@ -140,5 +140,6 @@ class CliqueGroup(Group):
 
     def invoke(self, ctx: Context) -> Any:
         _set_leader(ctx, self._leader)
-        super().invoke(ctx)
+        result = super().invoke(ctx)
         self._leader.invoke()
+        return result

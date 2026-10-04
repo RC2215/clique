@@ -3,8 +3,6 @@ from os import PathLike
 from types import TracebackType
 from typing import Protocol, TextIO, TypedDict, TypeVar, runtime_checkable
 
-from typing_extensions import Required
-
 T = TypeVar('T')
 T_co = TypeVar('T_co', covariant=True)
 
@@ -30,6 +28,6 @@ class ProgressBar(Protocol[T]):
 
 
 class LogSettings(TypedDict, total=False):
-    default_level: Required[int]
+    default_level: int
     stream: TextIO
     file_path: str | PathLike[str]
