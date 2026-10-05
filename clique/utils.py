@@ -1,0 +1,53 @@
+from collections.abc import Callable
+from copy import copy
+from functools import partial, update_wrapper
+from typing import Any
+
+from click import Command, make_pass_decorator
+
+from .exceptions import CliqueException
+from .leader import Leader
+
+COMMAND_ATTR_NAMES = {
+    'context_settings',
+    'help',
+    'epilog',
+    'short_help',
+    'options_metavar',
+    'add_help_option',
+    'no_args_is_help',
+    'hidden',
+    'deprecated',
+}
+
+pass_leader = make_pass_decorator(Leader)
+
+
+def _partial(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Callable[..., Any]:
+    return update_wrapper(partial(func, *args, **kwargs), func)
+
+
+def clone_command(cmd: Command, name: str, overrides: dict[str, Any], **attrs: Any) -> Command:
+    """
+    Create a new command based on an existing one, with predefined parameter values.
+    Note: Overridden parameters are removed and bound directly to the command callback.
+          Consequently, any special handling associated with those parameters no longer applies.
+
+    :param name: Name of the new command, underscores are replaced with hyphens.
+    :param cmd: Base Click command instance to inherit from.
+    :param overrides: Dictionary mapping parameter names to their overridden values.
+    :param attrs: Additional keyword attributes overriding attributes of :class:`Command`.
+    :return: A new :class:`Command` instance.
+    """
+    if unknown_params := (set(overrides) - {param.name for param in cmd.params}):
+        raise CliqueException(f'Unknown parameters for {cmd}: {", ".join(unknown_params)}')
+
+    if unknown_attrs := (set(attrs) - COMMAND_ATTR_NAMES):
+        raise CliqueException(f'Unknown attributes for {cmd}: {", ".join(unknown_attrs)}')
+
+    name = name.lower().replace('_', '-')
+    params = [copy(param) for param in cmd.params if param.name not in overrides]
+    callback = _partial(cmd.callback, **overrides) if cmd.callback is not None else None
+    attrs = {name: getattr(cmd, name) for name in COMMAND_ATTR_NAMES} | attrs
+
+    return cmd.__class__(name=name, params=params, callback=callback, **attrs)
